@@ -25,6 +25,7 @@ volatile int STOP = FALSE;
 
 int main(int argc, char *argv[])
 {
+	int estado=0;
     // Program usage: Uses either COM1 or COM2
     const char *serialPortName = argv[1];
 
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
     /*while (STOP == FALSE)
     {*/
         // Returns after 5 chars have been input
-        int bytes = read(fd, buf, BUF_SIZE);
+  /*      int bytes = read(fd, buf, BUF_SIZE);
         buf[bytes] = '\0'; // Set end of string to '\0', so we can printf
 
         //printf("0x%02X\n", buf, bytes);
@@ -104,6 +105,16 @@ int main(int argc, char *argv[])
 		}
        if (buf[0] == 'z')
             STOP = TRUE;
+*/
+	//TENTATIVA DO DIOGUINHO PÓCAS:----------------------------------------------
+	while(1){
+		switch (estado){
+			case (estado==0){
+				if (FLAG_RCV){
+					estado++;
+				}
+				case (estado==1){
+					if (FLAG_RCV
     //}
     
 		
