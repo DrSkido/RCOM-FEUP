@@ -22,6 +22,7 @@
 #define BUF_SIZE 5
 
 volatile int STOP = FALSE;
+int estado = 0;
 
 int main(int argc, char *argv[])
 {
@@ -125,22 +126,58 @@ int main(int argc, char *argv[])
         exit(-1);
     }*/
 
-    unsigned char buf2[BUF_SIZE + 1] = {0}; // +1: Save space for the final '\0' char
+    /*unsigned char buf2[BUF_SIZE + 1] = {0}; // +1: Save space for the final '\0' char
 
-    //while (STOP == FALSE)
-    //{
-        // Returns after 5 chars have been input
+ 
         int bytes1 = read(fd, buf2, BUF_SIZE);
-        //buf[bytes1] = '\0'; // Set end of string to '\0', so we can printf
 
-        //printf("0x%02X\n", buf, bytes);
         for(int i = 0; i < BUF_SIZE; i++){
             printf("0x%02X\n", buf2[i]);
         }
-        //if (buf[0] == 'z')
-          //  STOP = TRUE;
-    //}
+    */
+   char received[] = "";
 
+   while(1){
+    switch (estado) {
+        case 0:
+            if(received == "flag_RCV"){
+                estado = 1;
+            }
+        break;
+        case 1:
+            if(received == "flag_RCV"){
+                estado = 1;
+            }
+        break;
+        case 2:
+            if(received == "flag_RCV"){
+                estado = 1;
+            }
+
+        break;
+        case 3:
+            if(received == "flag_RCV"){
+                estado = 1;
+            }
+
+        break;
+        case 4:
+            if(received == "flag_RCV"){
+                estado = 1;
+            }
+
+        break;
+        case 5:
+
+        break;
+        default:
+    
+    }
+    if(estado = 5){
+        break;
+    }
+   }
+   
     // The while() cycle should be changed in order to respect the specifications
     // of the protocol indicated in the Lab guide
     sleep(1);
