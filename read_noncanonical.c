@@ -19,13 +19,12 @@
 #define FALSE 0
 #define TRUE 1
 
-#define BUF_SIZE 5
+#define BUF_SIZE 256
 
 volatile int STOP = FALSE;
 
 int main(int argc, char *argv[])
 {
-	int estado=0;
     // Program usage: Uses either COM1 or COM2
     const char *serialPortName = argv[1];
 
@@ -90,62 +89,120 @@ int main(int argc, char *argv[])
     printf("New termios structure set\n");
 
     // Loop for input
-    unsigned char buf[BUF_SIZE+1] = {0}; // +1: Save space for the final '\0' char
+    //unsigned char buf[BUF_SIZE + 1] = {0}; // +1: Save space for the final '\0' char
 
     /*while (STOP == FALSE)
-    {*/
+    {
         // Returns after 5 chars have been input
-  /*      int bytes = read(fd, buf, BUF_SIZE);
+        int bytes = read(fd, buf, BUF_SIZE);
         buf[bytes] = '\0'; // Set end of string to '\0', so we can printf
 
-        //printf("0x%02X\n", buf, bytes);
-        for (int i = 0; i<BUF_SIZE;i++){
-		printf("0x%02X\n", buf[i]);
-		
-		}
-       if (buf[0] == 'z')
+        printf(":%s:%d\n", buf, bytes);
+        if (buf[0] == 'z')
             STOP = TRUE;
-*/
-	//TENTATIVA DO DIOGUINHO PÓCAS:----------------------------------------------
-	while(1){
-		switch (estado){
-			case (estado==0){
-				if (FLAG_RCV){
-					estado++;
-				}
-				case (estado==1){
-					if (FLAG_RCV
-    //}
-    
-		
+    } */
 
-    // The while() cycle should be changed in order to respect the specifications
-    // of the protocol indicated ibuf2[0]=0x7E;n the Lab guide
+    int estado = 0;
+    unsigned char current = 0;
 
-    // Restore the old port settings
-    /*if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
-    {
-        perror("tcsetattr");
-        exit(-1);
-    }*/
-   unsigned char buf2[BUF_SIZE] = {0};
-	
-	buf2[0]=0x7E;
-	buf2[1]=0x01;
-	buf2[2]=0x07;
-	buf2[3]=0x01^0x07;
-	buf2[4]=0x7E;
+    while(1){
+        read(fd, &current, 1);
+        /*if(current == 01111110){
+            strcpy(received, "flag_RCV");
+        }
+        else if(current == 00000011){
+            strcpy(received, "A");
+        }
+        else if(current == 00000011^00000011){
+            strcpy(received, "BCC");
+        }
+        else if(current == 00000011^00000011){
+            strcpy(received, "other");
+        }*/
+        
+        switch (estado) {
+            case 0:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                printf("Start\n");
+            break;
+            case 1:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                else if(current == 0x03){
+                    estado = 2;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("FLAG_RCV\n");
+            break;
+            case 2:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                else if(current == 0x03){
+                    estado = 3;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("A RCV\n");
+            break;
+            case 3:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                else if(current == 0x00){
+                    estado = 4;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("C RCV\n");
+            break;
+            case 4:
+                if(current == 0x7E){
+                    estado = 5;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("BCC OK\n");
+            break;
+            case 5:
+            
+            break;
+        }
 
-	
-	int bytes1 = write(fd, buf2, BUF_SIZE);
-    printf("%d bytes written\n", bytes1);
-    for (int i = 0; i<BUF_SIZE;i++){
-		printf("0x%02X\n", buf2[i]);
-		
-		}
+        if(estado == 5){
+            printf("0x%02X\n", current);
+            printf("STOP\n");
+            break;
+        }
+        printf("0x%02X\n", current);
+       }
 
-    // Wait until all bytes have been written to the serial port
-    sleep(1);
+
+       unsigned char buf[5] = {0};
+
+       buf[0] = 0x7E;
+       buf[1] = 0x01;
+       buf[2] = 0x07;
+       buf[3] = 0x01^0x07;
+       buf[4] = 0x7E;
+   
+   
+       int bytes = 0;
+       for(int i = 0; i < 5; i++){
+           int a = write(fd, &buf[i], 1);
+           bytes = bytes + a;
+           //sleep(1);
+       }
+       //int bytes = write(fd, buf, BUF_SIZE);
+       printf("%d bytes written\n", bytes);
 
     // Restore the old port settings
     if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
@@ -153,9 +210,8 @@ int main(int argc, char *argv[])
         perror("tcsetattr");
         exit(-1);
     }
-    
-    
+
     close(fd);
-	
+
     return 0;
 }
