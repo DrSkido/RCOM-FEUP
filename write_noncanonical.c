@@ -22,7 +22,6 @@
 #define BUF_SIZE 5
 
 volatile int STOP = FALSE;
-int estado = 0;
 
 int main(int argc, char *argv[])
 {
@@ -93,11 +92,6 @@ int main(int argc, char *argv[])
     // Create string to send
     unsigned char buf[BUF_SIZE] = {0};
 
-    /*for (int i = 0; i < BUF_SIZE; i++)
-    {
-        buf[i] = 'a' + i % 26;
-    }*/
-
     buf[0] = 0x7E;
     buf[1] = 0x03;
     buf[2] = 0x03;
@@ -105,82 +99,100 @@ int main(int argc, char *argv[])
     buf[4] = 0x7E;
 
 
-
-
-
-    // In non-canonical mode, '\n' does not end the writing.
-    // Test this condition by placing a '\n' in the middle of the buffer.
-    // The whole buffer must be sent even with the '\n'.
-    //buf[5] = '\n';
-
-    int bytes = write(fd, buf, BUF_SIZE);
+    int bytes = 0;
+    for(int i = 0; i < 5; i++){
+        int a = write(fd, &buf[i], 1);
+        bytes = bytes + a;
+        //sleep(1);
+    }
+    //int bytes = write(fd, buf, BUF_SIZE);
     printf("%d bytes written\n", bytes);
 
     // Wait until all bytes have been written to the serial port
-    //sleep(1);
+    int estado = 0;
+    unsigned char current = 0;
 
-    // Restore the old port settings
-    /*if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
-    {
-        perror("tcsetattr");
-        exit(-1);
-    }*/
-
-    /*unsigned char buf2[BUF_SIZE + 1] = {0}; // +1: Save space for the final '\0' char
-
- 
-        int bytes1 = read(fd, buf2, BUF_SIZE);
-
-        for(int i = 0; i < BUF_SIZE; i++){
-            printf("0x%02X\n", buf2[i]);
+    while(1){
+        read(fd, &current, 1);
+        /*if(current == 01111110){
+            strcpy(received, "flag_RCV");
         }
-    */
-   char received[] = "";
+        else if(current == 00000011){
+            strcpy(received, "A");
+        }
+        else if(current == 00000011^00000011){
+            strcpy(received, "BCC");
+        }
+        else if(current == 00000011^00000011){
+            strcpy(received, "other");
+        }*/
+        
+        switch (estado) {
+            case 0:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                printf("Start\n");
+            break;
+            case 1:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                else if(current == 0x01){
+                    estado = 2;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("FLAG_RCV\n");
+            break;
+            case 2:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                else if(current == 0x07){
+                    estado = 3;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("A RCV\n");
+            break;
+            case 3:
+                if(current == 0x7E){
+                    estado = 1;
+                }
+                else if(current == 0x01^0x07){
+                    estado = 4;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("C RCV\n");
+            break;
+            case 4:
+                if(current == 0x7E){
+                    estado = 5;
+                }
+                else {
+                    estado = 0;
+                }
+                printf("BCC OK\n");
+            break;
+            case 5:
+            
+            break;
+        }
 
-   while(1){
-    switch (estado) {
-        case 0:
-            if(received == "flag_RCV"){
-                estado = 1;
-            }
-        break;
-        case 1:
-            if(received == "flag_RCV"){
-                estado = 1;
-            }
-        break;
-        case 2:
-            if(received == "flag_RCV"){
-                estado = 1;
-            }
+        if(estado == 5){
+            printf("0x%02X\n", current);
+            printf("STOP\n");
+            break;
+        }
+        printf("0x%02X\n", current);
+       }
 
-        break;
-        case 3:
-            if(received == "flag_RCV"){
-                estado = 1;
-            }
 
-        break;
-        case 4:
-            if(received == "flag_RCV"){
-                estado = 1;
-            }
-
-        break;
-        case 5:
-
-        break;
-        default:
-    
-    }
-    if(estado = 5){
-        break;
-    }
-   }
-   
-    // The while() cycle should be changed in order to respect the specifications
-    // of the protocol indicated in the Lab guide
-    sleep(1);
     // Restore the old port settings
     if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
     {
